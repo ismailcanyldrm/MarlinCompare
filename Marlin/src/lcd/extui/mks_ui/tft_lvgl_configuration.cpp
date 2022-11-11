@@ -87,6 +87,10 @@ extern uint8_t sel_id;
 uint8_t bmp_public_buf[14 * 1024];
 uint8_t public_buf[513];
 
+#ifdef USE_NEW_LVGL_CONF
+  mks_ui_t mks_ui;
+#endif
+
 extern bool flash_preview_begin, default_preview_flg, gcode_preview_over;
 
 void SysTick_Callback() {
@@ -127,9 +131,32 @@ void tft_lvgl_init() {
 
   watchdog_refresh();     // LVGL init takes time
 
+  #if MB(MKS_ROBIN_NANO)
+    OUT_WRITE(PB0, LOW);  // HE1
+  #endif
+
   // Init TFT first!
   SPI_TFT.spi_init(SPI_FULL_SPEED);
   SPI_TFT.LCD_init();
+
+  #if ENABLED(USB_FLASH_DRIVE_SUPPORT)
+    uint16_t usb_flash_loop = 1000;
+    #if ENABLED(MULTI_VOLUME)
+      SET_INPUT_PULLUP(SD_DETECT_PIN);
+      if (READ(SD_DETECT_PIN) == LOW) card.changeMedia(&card.media_driver_sdcard);
+      else card.changeMedia(&card.media_driver_usbFlash);
+    #endif
+    do {
+      card.media_driver_usbFlash.idle();
+      watchdog_refresh();
+      delay(2);
+    } while((!card.media_driver_usbFlash.isInserted()) && (usb_flash_loop--));
+    card.mount();
+  #elif HAS_LOGO_IN_FLASH
+    delay(1000);
+    watchdog_refresh(); 
+    delay(1000);
+  #endif
 
   watchdog_refresh();     // LVGL init takes time
 
@@ -224,7 +251,12 @@ void tft_lvgl_init() {
     }
   #endif
 
-  if (ready) lv_draw_ready_print();
+  if (ready) {
+#ifdef USE_NEW_LVGL_CONF
+    set_main_screen();
+#endif
+    lv_draw_ready_print();
+  }
 
   #if BOTH(MKS_TEST, SDSUPPORT)
     if (mks_test_flag == 0x1E) mks_gpio_test();

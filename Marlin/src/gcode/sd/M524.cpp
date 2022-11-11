@@ -31,9 +31,7 @@
  * M524: Abort the current SD print job (started with M24)
  */
 void GcodeSuite::M524() {
-  SERIAL_ECHOPGM("\xFF\xFF\xFF");
-  SERIAL_ECHOPGM("t10.txt=\"Aborting print...\"");
-  SERIAL_ECHOPGM("\xFF\xFF\xFF");
+
   if (IS_SD_PRINTING())
     card.abortFilePrintSoon();
   else if (card.isMounted())

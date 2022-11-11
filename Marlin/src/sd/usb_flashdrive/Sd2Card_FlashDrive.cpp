@@ -30,7 +30,7 @@
  *    3 - perform block range checking
  *    4 - print each block access
  */
-#define USB_DEBUG         1
+#define USB_DEBUG         0
 #define USB_STARTUP_DELAY 0
 
 // uncomment to get 'printf' console debugging. NOT FOR UNO!
@@ -126,7 +126,7 @@ bool DiskIODriver_USBFlash::usbStartup() {
     SERIAL_ECHOPGM("Starting USB host...");
     if (!UHS_START) {
       SERIAL_ECHOLNPGM(" failed.");
-      LCD_MESSAGE(MSG_MEDIA_USB_FAILED);
+      LCD_MESSAGEPGM(MSG_MEDIA_USB_FAILED);
       return false;
     }
 
@@ -148,6 +148,7 @@ bool DiskIODriver_USBFlash::usbStartup() {
 // of initializing the USB library for the first time.
 
 void DiskIODriver_USBFlash::idle() {
+
   usb.Task();
 
   const uint8_t task_state = usb.getUsbTaskState();
@@ -221,7 +222,7 @@ void DiskIODriver_USBFlash::idle() {
           #if USB_DEBUG >= 1
             SERIAL_ECHOLNPGM("Waiting for media");
           #endif
-          LCD_MESSAGE(MSG_MEDIA_WAITING);
+          LCD_MESSAGEPGM(MSG_MEDIA_WAITING);
           GOTO_STATE_AFTER_DELAY(state, 2000);
         }
         break;
@@ -236,7 +237,7 @@ void DiskIODriver_USBFlash::idle() {
         SERIAL_ECHOLNPGM("USB device removed");
       #endif
       if (state != MEDIA_READY)
-        LCD_MESSAGE(MSG_MEDIA_USB_REMOVED);
+        LCD_MESSAGEPGM(MSG_MEDIA_USB_REMOVED);
       GOTO_STATE_AFTER_DELAY(WAIT_FOR_DEVICE, 0);
     }
 
@@ -245,12 +246,12 @@ void DiskIODriver_USBFlash::idle() {
       #if USB_DEBUG >= 1
         SERIAL_ECHOLNPGM("Media removed");
       #endif
-      LCD_MESSAGE(MSG_MEDIA_REMOVED);
+      LCD_MESSAGEPGM(MSG_MEDIA_REMOVED);
       GOTO_STATE_AFTER_DELAY(WAIT_FOR_DEVICE, 0);
     }
 
     else if (task_state == UHS_STATE(ERROR)) {
-      LCD_MESSAGE(MSG_MEDIA_READ_ERROR);
+      LCD_MESSAGEPGM(MSG_MEDIA_READ_ERROR);
       GOTO_STATE_AFTER_DELAY(MEDIA_ERROR, 0);
     }
   }

@@ -72,8 +72,8 @@ char CardReader::filename[FILENAME_LENGTH], CardReader::longFilename[LONG_FILENA
 
 IF_DISABLED(NO_SD_AUTOSTART, uint8_t CardReader::autofile_index); // = 0
 
-#if ENABLED(BINARY_FILE_TRANSFER)
-  serial_index_t IF_DISABLED(HAS_MULTI_SERIAL, constexpr) CardReader::transfer_port_index;
+#if BOTH(HAS_MULTI_SERIAL, BINARY_FILE_TRANSFER)
+  serial_index_t CardReader::transfer_port_index;
 #endif
 
 // private:
@@ -277,7 +277,6 @@ void CardReader::printListing(
   OPTARG(LONG_FILENAME_HOST_SUPPORT, const char * const prependLong/*=nullptr*/)
 ) {
   dir_t p;
-  int sayac=0;
   while (parent.readDir(&p, longFilename) > 0) {
     if (DIR_IS_SUBDIR(&p)) {
 
@@ -309,11 +308,6 @@ void CardReader::printListing(
           }
           else
             printListing(child, false, path);
-
-
-
-
-
         #else
           printListing(child, path);
         #endif
@@ -327,30 +321,12 @@ void CardReader::printListing(
         SERIAL_ECHO(prepend);
         SERIAL_CHAR('/');
       }
-
-
-      SERIAL_ECHOPGM("\xFF\xFF\xFF");
-
-      if (sayac == 0){SERIAL_ECHOPGM("sd_1.txt=\"");}
-      if (sayac == 1){SERIAL_ECHOPGM("sd_2.txt=\"");}
-      if (sayac == 2){SERIAL_ECHOPGM("sd_3.txt=\"");}
-
       SERIAL_ECHO(createFilename(filename, p));
-
-      SERIAL_ECHOPGM("\"\xFF\xFF\xFF");
-
-      if (sayac == 0){SERIAL_ECHOPGM("size_1.txt=\"");}
-      if (sayac == 1){SERIAL_ECHOPGM("size_2.txt=\"");}
-      if (sayac == 2){SERIAL_ECHOPGM("size_3.txt=\"");}
-
-      SERIAL_ECHO(p.fileSize);
-
-      SERIAL_ECHOPGM("\"\xFF\xFF\xFF");
-
+      SERIAL_CHAR(' ');
       #if ENABLED(LONG_FILENAME_HOST_SUPPORT)
         if (!includeLongNames)
       #endif
-
+          SERIAL_ECHOLN(p.fileSize);
       #if ENABLED(LONG_FILENAME_HOST_SUPPORT)
         else {
           SERIAL_ECHO(p.fileSize);
@@ -362,7 +338,6 @@ void CardReader::printListing(
           SERIAL_ECHOLN(longFilename[0] ? longFilename : "???");
         }
       #endif
-      sayac +=1;
     }
   }
 }
@@ -384,7 +359,7 @@ void CardReader::ls(TERN_(LONG_FILENAME_HOST_SUPPORT, bool includeLongNames/*=fa
   //
   void CardReader::printLongPath(char * const path) {
 
-    int i, pathLen = path ? strlen(path) : 0;
+    int i, pathLen = strlen(path);
 
     // SERIAL_ECHOPGM("Full Path: "); SERIAL_ECHOLN(path);
 
@@ -422,7 +397,7 @@ void CardReader::ls(TERN_(LONG_FILENAME_HOST_SUPPORT, bool includeLongNames/*=fa
       // Open the sub-item as the new dive parent
       SdFile dir;
       if (!dir.open(&diveDir, segment, O_READ)) {
-        //SERIAL_EOL();
+        SERIAL_EOL();
         SERIAL_ECHO_START();
         SERIAL_ECHOPGM(STR_SD_CANT_OPEN_SUBDIR, segment);
         break;
@@ -433,7 +408,7 @@ void CardReader::ls(TERN_(LONG_FILENAME_HOST_SUPPORT, bool includeLongNames/*=fa
 
     } // while i<pathLen
 
-   //SERIAL_EOL();
+    SERIAL_EOL();
   }
 
 #endif // LONG_FILENAME_HOST_SUPPORT
@@ -441,20 +416,11 @@ void CardReader::ls(TERN_(LONG_FILENAME_HOST_SUPPORT, bool includeLongNames/*=fa
 //
 // Echo the DOS 8.3 filename (and long filename, if any)
 //
-
 void CardReader::printSelectedFilename() {
   if (file.isOpen()) {
     char dosFilename[FILENAME_LENGTH];
     file.getDosName(dosFilename);
-
-    SERIAL_ECHOPGM("\xFF\xFF\xFF");
-
-    SERIAL_ECHOPGM("t5.txt=\"");
-    for(int i = 0; i < FILENAME_LENGTH;i++) {
-      SERIAL_CHAR(dosFilename[i]);
-    }
-    SERIAL_CHAR('\"');
-    SERIAL_ECHOPGM("\xFF\xFF\xFF");
+    SERIAL_ECHO(dosFilename);
     #if ENABLED(LONG_FILENAME_HOST_SUPPORT)
       selectFileByName(dosFilename);
       if (longFilename[0]) {
@@ -463,13 +429,10 @@ void CardReader::printSelectedFilename() {
       }
     #endif
   }
-  else {
-    SERIAL_ECHOPGM("\xFF\xFF\xFF");
-    SERIAL_ECHOPGM("t5.txt=\"No file\"");
-    SERIAL_ECHOPGM("\xFF\xFF\xFF");
-  }
+  else
+    SERIAL_ECHOPGM("(no file)");
 
-  //SERIAL_EOL();
+  SERIAL_EOL();
 }
 
 void CardReader::mount() {
@@ -494,7 +457,7 @@ void CardReader::mount() {
     cdroot();
   #if ENABLED(USB_FLASH_DRIVE_SUPPORT) || PIN_EXISTS(SD_DETECT)
     else if (marlin_state != MF_INITIALIZING)
-      ui.set_status(GET_TEXT_F(MSG_MEDIA_INIT_FAIL), -1);
+      ui.set_status_P(GET_TEXT(MSG_SD_INIT_FAIL), -1);
   #endif
 
   ui.refresh();
@@ -651,7 +614,7 @@ void announceOpen(const uint8_t doing, const char * const path) {
     PORT_REDIRECT(SerialMask::All);
     SERIAL_ECHO_START();
     SERIAL_ECHOPGM("Now ");
-    SERIAL_ECHOF(doing == 1 ? F("doing") : F("fresh"));
+    SERIAL_ECHOPGM_P(doing == 1 ? PSTR("doing") : PSTR("fresh"));
     SERIAL_ECHOLNPGM(" file: ", path);
   }
 }
@@ -683,7 +646,7 @@ void CardReader::openFileRead(const char * const path, const uint8_t subcall_typ
         // Too deep? The firmware has to bail.
         if (file_subcall_ctr > SD_PROCEDURE_DEPTH - 1) {
           SERIAL_ERROR_MSG("Exceeded max SUBROUTINE depth:", SD_PROCEDURE_DEPTH);
-          kill(GET_TEXT_F(MSG_KILL_SUBCALL_OVERFLOW));
+          kill(GET_TEXT(MSG_KILL_SUBCALL_OVERFLOW));
           return;
         }
 
@@ -1362,7 +1325,7 @@ void CardReader::fileHasFinished() {
       removeFile(recovery.filename);
       #if ENABLED(DEBUG_POWER_LOSS_RECOVERY)
         SERIAL_ECHOPGM("Power-loss file delete");
-        SERIAL_ECHOF(jobRecoverFileExists() ? F(" failed.\n") : F("d.\n"));
+        SERIAL_ECHOPGM_P(jobRecoverFileExists() ? PSTR(" failed.\n") : PSTR("d.\n"));
       #endif
     }
   }

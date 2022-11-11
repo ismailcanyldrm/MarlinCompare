@@ -54,7 +54,7 @@
  */
 void GcodeSuite::M150() {
   #if ENABLED(NEOPIXEL_LED)
-    const pixel_index_t index = parser.intval('I', -1);
+    const int8_t index = parser.intval('I', -1);
     #if ENABLED(NEOPIXEL2_SEPARATE)
       int8_t brightness = neo.brightness(), unit = parser.intval('S', -1);
       switch (unit) {
@@ -63,7 +63,6 @@ void GcodeSuite::M150() {
         case  1: neo2.neoindex = index; brightness = neo2.brightness(); break;
       }
     #else
-
       const uint8_t brightness = neo.brightness();
       neo.neoindex = index;
     #endif

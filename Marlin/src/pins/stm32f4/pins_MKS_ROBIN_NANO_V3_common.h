@@ -26,10 +26,11 @@
 // MKS Robin Nano V3, MKS Eagle pinmap
 //
 
-#define HAS_OTG_USB_HOST_SUPPORT                  // USB Flash Drive support
+// USB Flash Drive support
+#define HAS_OTG_USB_HOST_SUPPORT
 
 // Avoid conflict with TIMER_TONE
-#define STEP_TIMER 10
+#define STEP_TIMER                            10
 
 // Use one of these or SDCard-based Emulation will be used
 //#define SRAM_EEPROM_EMULATION                   // Use BackSRAM-based EEPROM emulation
@@ -118,20 +119,16 @@
 #define TEMP_0_PIN                          PC1   // TH1
 #define TEMP_1_PIN                          PA2   // TH2
 #define TEMP_BED_PIN                        PC0   // TB1
-#define TEMP_CHAMBER_PIN                    PA2
-
-
-
 
 //
 // Heaters / Fans
 //
-#define HEATER_0_PIN                        PE5   // HEATER1 PE5
-#define HEATER_1_PIN                        PA0   // HEATER2 PB0
-#define HEATER_BED_PIN                      PB0   // HOT BED
+#define HEATER_0_PIN                        PE5   // HEATER1
+#define HEATER_1_PIN                        PB0   // HEATER2
+#define HEATER_BED_PIN                      PA0   // HOT BED
 
-//#define FAN_PIN                             PC14  // FAN
-//#define FAN1_PIN                            PB1   // FAN1
+#define FAN_PIN                             PC14  // FAN
+#define FAN1_PIN                            PB1   // FAN1
 
 //
 // Thermocouples
@@ -149,14 +146,14 @@
 #endif
 
 #ifndef FIL_RUNOUT_PIN
-  #define FIL_RUNOUT_PIN                    PE6 // MT_DET1 PA4
+  #define FIL_RUNOUT_PIN            MT_DET_1_PIN
 #endif
 #ifndef FIL_RUNOUT2_PIN
-  #define FIL_RUNOUT2_PIN                   PA4 // MT_DET2
+  #define FIL_RUNOUT2_PIN           MT_DET_2_PIN
 #endif
 
 #ifndef POWER_LOSS_PIN
-  #define POWER_LOSS_PIN                    PA13  // PW_DET
+  // #define POWER_LOSS_PIN                    PA13  // PW_DET
 #endif
 
 //#define SUICIDE_PIN                       PB2
@@ -168,10 +165,17 @@
 // Power Supply Control
 //
 #if ENABLED(MKS_PWC)
-    #define PS_ON_PIN                       PE10
-     // PW_OFF
+  #if ENABLED(TFT_LVGL_UI)
+    #undef PSU_CONTROL
+    #undef MKS_PWC
+    #define SUICIDE_PIN                     PB2
+    #define SUICIDE_PIN_STATE               LOW
+  #else
+    #define PS_ON_PIN                       PB2   // PW_OFF
   #endif
-
+  #define KILL_PIN                          PA13  // PW_DET
+  #define KILL_PIN_STATE                    HIGH
+#endif
 
 // Random Info
 #define USB_SERIAL              -1  // USB Serial
@@ -203,11 +207,11 @@
 #if SD_CONNECTION_IS(ONBOARD)
   #define ENABLE_SPI3
   #define SD_SS_PIN                         -1
-  #define SDSS                              PC9 // PC9
-  #define SD_SCK_PIN                        PC10 // PC10
-  #define SD_MISO_PIN                       PC11 // PC11
-  #define SD_MOSI_PIN                       PC12 // PC12
-  #define SD_DETECT_PIN                     PD12 // PD12
+  #define SDSS                              PC9
+  #define SD_SCK_PIN                        PC10
+  #define SD_MISO_PIN                       PC11
+  #define SD_MOSI_PIN                       PC12
+  #define SD_DETECT_PIN                     PD12
 #endif
 
 #define SPI_FLASH
@@ -215,10 +219,10 @@
   #define HAS_SPI_FLASH                        1
   #define SPI_DEVICE                           2
   #define SPI_FLASH_SIZE               0x1000000
-  #define SPI_FLASH_CS_PIN                  PB12 //PB12
-  #define SPI_FLASH_MOSI_PIN                PC3 // PC3
-  #define SPI_FLASH_MISO_PIN                PC2 // PC2
-  #define SPI_FLASH_SCK_PIN                 PB13 //PB13
+  #define SPI_FLASH_CS_PIN                  PB12
+  #define SPI_FLASH_MOSI_PIN                PC3
+  #define SPI_FLASH_MISO_PIN                PC2
+  #define SPI_FLASH_SCK_PIN                 PB13
 #endif
 
 /**
@@ -231,7 +235,7 @@
  *                ------                                     ------
  *                 EXP1                                       EXP2
  */
-#define EXP1_03_PIN                         PB0
+#define EXP1_03_PIN                         PD10
 #define EXP1_04_PIN                         PD11
 #define EXP1_05_PIN                         PE15
 #define EXP1_06_PIN                         PE14
@@ -241,14 +245,13 @@
 #define EXP1_10_PIN                         PC5
 
 #define EXP2_03_PIN                         -1    // RESET
-#define EXP2_04_PIN                         PE5
+#define EXP2_04_PIN                         PE12
 #define EXP2_05_PIN                         PA7
 #define EXP2_06_PIN                         PE11
 #define EXP2_07_PIN                         PE10
 #define EXP2_08_PIN                         PE8
 #define EXP2_09_PIN                         PA5
 #define EXP2_10_PIN                         PA6
-
 
 //
 // SPI SD Card
@@ -333,7 +336,7 @@
     //#define MKS_LCD12864B
     //#undef SHOW_BOOTSCREEN
 
-  #elif ENABLED(FYSETC_MINI_12864_2_1)
+  #elif ENABLED(MKS_MINI_12864_V3)
     #define DOGLCD_CS                EXP1_08_PIN
     #define DOGLCD_A0                EXP1_07_PIN
     #define LCD_PINS_DC                DOGLCD_A0

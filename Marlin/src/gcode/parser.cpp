@@ -345,7 +345,7 @@ void GCodeParser::parse(char *p) {
         #endif
       }
 
-      if (TERN0(DEBUG_GCODE_PARSER, debug)) /*SERIAL_EOL()*/;
+      if (TERN0(DEBUG_GCODE_PARSER, debug)) SERIAL_EOL();
 
       TERN_(FASTER_GCODE_PARSER, set(param, valptr)); // Set parameter exists and pointer (nullptr for no value)
     }

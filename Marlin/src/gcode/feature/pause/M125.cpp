@@ -61,15 +61,6 @@ void GcodeSuite::M125() {
   xyz_pos_t park_point = NOZZLE_PARK_POINT;
 
   // Move XY axes to filament change position or given position
-
-    SERIAL_ECHOPGM("\xFF\xFF\xFF");
-  SERIAL_ECHOPGM("b7.aph=0");
-  SERIAL_ECHOPGM("\xFF\xFF\xFF");
-
-
-  SERIAL_ECHOPGM("\xFF\xFF\xFF");
-  SERIAL_ECHOPGM("t10.txt=\"Parking...\"");
-  SERIAL_ECHOPGM("\xFF\xFF\xFF");
   if (parser.seenval('X')) park_point.x = RAW_X_POSITION(parser.linearval('X'));
   if (parser.seenval('Y')) park_point.y = RAW_X_POSITION(parser.linearval('Y'));
 
@@ -87,19 +78,10 @@ void GcodeSuite::M125() {
   // If possible, show an LCD prompt with the 'P' flag
   const bool show_lcd = TERN0(HAS_LCD_MENU, parser.boolval('P'));
 
-
-
   if (pause_print(retract, park_point, show_lcd, 0)) {
-    SERIAL_ECHOPGM("\xFF\xFF\xFF");
-    SERIAL_ECHOPGM("b9.aph=127");
-    SERIAL_ECHOPGM("\xFF\xFF\xFF");
-    SERIAL_ECHOPGM("\xFF\xFF\xFF");
-    SERIAL_ECHOPGM("t10.txt=\"Paused...\"");
-    SERIAL_ECHOPGM("\xFF\xFF\xFF");
-
     if (ENABLED(EXTENSIBLE_UI) || BOTH(EMERGENCY_PARSER, HOST_PROMPT_SUPPORT) || !sd_printing || show_lcd) {
-      //wait_for_confirmation(false, 0);
-      //resume_print(0, 0, -retract, 0);
+      wait_for_confirmation(false, 0);
+      resume_print(0, 0, -retract, 0);
     }
   }
 }

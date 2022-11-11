@@ -212,7 +212,7 @@
       if (data.is_ot) SERIAL_ECHOLNPGM("overtemperature");
       if (data.is_s2g) SERIAL_ECHOLNPGM("coil short circuit");
       TERN_(TMC_DEBUG, tmc_report_all());
-      kill(F("Driver error"));
+      kill(PSTR("Driver error"));
     }
   #endif
 
@@ -222,7 +222,7 @@
     duration_t elapsed = print_job_timer.duration();
     const bool has_days = (elapsed.value > 60*60*24L);
     (void)elapsed.toDigital(timestamp, has_days);
-   // SERIAL_EOL();
+    SERIAL_EOL();
     SERIAL_ECHO(timestamp);
     SERIAL_ECHOPGM(": ");
     st.printLabel();
@@ -296,7 +296,7 @@
 
       #if ENABLED(STOP_ON_ERROR)
         if (st.error_count >= 10) {
-          //SERIAL_EOL();
+          SERIAL_EOL();
           st.printLabel();
           report_driver_error(data);
         }
@@ -457,7 +457,7 @@
         (void)monitor_tmc_driver(stepperE7, need_update_error_counters, need_debug_reporting);
       #endif
 
-      if (TERN0(TMC_DEBUG, need_debug_reporting)) //SERIAL_EOL();
+      if (TERN0(TMC_DEBUG, need_debug_reporting)) SERIAL_EOL();
     }
   }
 
@@ -472,8 +472,12 @@
     void tmc_set_report_interval(const uint16_t update_interval) {
       if ((report_tmc_status_interval = update_interval))
         SERIAL_ECHOLNPGM("axis:pwm_scale"
-          TERN_(HAS_STEALTHCHOP, "/curr_scale")
-          TERN_(HAS_STALLGUARD, "/mech_load")
+          #if HAS_STEALTHCHOP
+            "/curr_scale"
+          #endif
+          #if HAS_STALLGUARD
+            "/mech_load"
+          #endif
           "|flags|warncount"
         );
     }
@@ -557,7 +561,7 @@
   };
 
   template<class TMC>
-  static void print_vsense(TMC &st) { SERIAL_ECHOF(st.vsense() ? F("1=.18") : F("0=.325")); }
+  static void print_vsense(TMC &st) { SERIAL_ECHOPGM_P(st.vsense() ? PSTR("1=.18") : PSTR("0=.325")); }
 
   #if HAS_DRIVER(TMC2130) || HAS_DRIVER(TMC5130)
     static void _tmc_status(TMC2130Stepper &st, const TMC_debug_enum i) {
@@ -728,7 +732,7 @@
           SERIAL_ECHO(st.cs());
           SERIAL_ECHOPGM("/31");
           break;
-        case TMC_VSENSE: SERIAL_ECHOF(st.vsense() ? F("1=.165") : F("0=.310")); break;
+        case TMC_VSENSE: SERIAL_ECHOPGM_P(st.vsense() ? PSTR("1=.165") : PSTR("0=.310")); break;
         case TMC_MICROSTEPS: SERIAL_ECHO(st.microsteps()); break;
         //case TMC_OTPW: serialprint_truefalse(st.otpw()); break;
         //case TMC_OTPW_TRIGGERED: serialprint_truefalse(st.getOTPW()); break;
@@ -761,7 +765,7 @@
         SERIAL_CHAR('\t');
         print_hex_long(drv_status, ':');
         if (drv_status == 0xFFFFFFFF || drv_status == 0) SERIAL_ECHOPGM("\t Bad response!");
-        //SERIAL_EOL();
+        SERIAL_EOL();
         break;
       }
       default: _tmc_parse_drv_status(st, i); break;
@@ -839,7 +843,7 @@
       #endif
     }
 
-    //SERIAL_EOL();
+    SERIAL_EOL();
   }
 
   static void drv_status_loop(const TMC_drv_status_enum n, LOGICAL_AXIS_ARGS(const bool)) {
@@ -913,7 +917,7 @@
       #endif
     }
 
-    //SERIAL_EOL();
+    SERIAL_EOL();
   }
 
   /**
@@ -990,7 +994,7 @@
       DRV_REPORT("s2vsb\t",          TMC_S2VSB);
     #endif
     DRV_REPORT("Driver registers:\n",TMC_DRV_STATUS_HEX);
-    //SERIAL_EOL();
+    SERIAL_EOL();
   }
 
   #define PRINT_TMC_REGISTER(REG_CASE) case TMC_GET_##REG_CASE: print_hex_long(st.REG_CASE(), ':'); break
@@ -1118,7 +1122,7 @@
       #endif
     }
 
-    //SERIAL_EOL();
+    SERIAL_EOL();
   }
 
   void tmc_get_registers(LOGICAL_AXIS_ARGS(bool)) {
@@ -1252,14 +1256,15 @@ static bool test_connection(TMC &st) {
 
   if (test_result > 0) SERIAL_ECHOPGM("Error: All ");
 
-  FSTR_P stat;
+  const char *stat;
   switch (test_result) {
     default:
-    case 0: stat = F("OK"); break;
-    case 1: stat = F("HIGH"); break;
-    case 2: stat = F("LOW"); break;
+    case 0: stat = PSTR("OK"); break;
+    case 1: stat = PSTR("HIGH"); break;
+    case 2: stat = PSTR("LOW"); break;
   }
-  SERIAL_ECHOLNF(stat);
+  SERIAL_ECHOPGM_P(stat);
+  SERIAL_EOL();
 
   return test_result;
 }
@@ -1337,7 +1342,7 @@ void test_tmc_connection(LOGICAL_AXIS_ARGS(const bool)) {
     #endif
   }
 
-  if (axis_connection) LCD_MESSAGE(MSG_ERROR_TMC);
+  if (axis_connection) LCD_MESSAGEPGM(MSG_ERROR_TMC);
 }
 
 #endif // HAS_TRINAMIC_CONFIG

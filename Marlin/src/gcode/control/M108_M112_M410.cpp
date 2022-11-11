@@ -34,14 +34,13 @@
 void GcodeSuite::M108() {
   TERN_(HAS_RESUME_CONTINUE, wait_for_user = false);
   wait_for_heatup = false;
-  wait_for_user = false;
 }
 
 /**
  * M112: Full Shutdown
  */
 void GcodeSuite::M112() {
-  kill(FPSTR(M112_KILL_STR), nullptr, true);
+  kill(M112_KILL_STR, nullptr, true);
 }
 
 /**

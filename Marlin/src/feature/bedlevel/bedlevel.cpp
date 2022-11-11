@@ -162,7 +162,7 @@ void reset_bed_level() {
         serial_spaces(precision + (x < 10 ? 3 : 2));
         SERIAL_ECHO(x);
       }
-     //SERIAL_EOL();
+      SERIAL_EOL();
     #endif
     #ifdef SCAD_MESH_OUTPUT
       SERIAL_ECHOLNPGM("measured_z = ["); // open 2D array
@@ -199,12 +199,12 @@ void reset_bed_level() {
         SERIAL_ECHOPGM(" ]");            // close sub-array
         if (y < sy - 1) SERIAL_CHAR(',');
       #endif
-     // SERIAL_EOL();
+      SERIAL_EOL();
     }
     #ifdef SCAD_MESH_OUTPUT
       SERIAL_ECHOPGM("];");               // close 2D array
     #endif
-    //SERIAL_EOL();
+    SERIAL_EOL();
   }
 
 #endif // AUTO_BED_LEVELING_BILINEAR || MESH_BED_LEVELING
